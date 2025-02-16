@@ -1,5 +1,6 @@
 """Utilities to generate train / test datasets."""
 
+import argparse
 import json
 import os
 import random
@@ -216,8 +217,114 @@ def generate_dataset(
 
             annotation_index += 1
 
-    print(coco_annotations)
     with open(path_annotations, "w") as file:
         json.dump(coco_annotations, file)
 
 
+def parse_args() -> argparse.Namespace:
+    """Parse the CLI arguments."""
+    parser = argparse.ArgumentParser(description="Generate a detection dataset.")
+
+    parser.add_argument(
+        "path_mnist",
+        type=str,
+        help="Path to the MNIST source dataset."
+    )
+
+    parser.add_argument(
+        "path_dataset",
+        type=str,
+        help="Path to the generated dataset."
+    )
+
+    parser.add_argument(
+        "sample_count",
+        type=int,
+        help="Number of samples to generate."
+    )
+
+    parser.add_argument(
+        "--type",
+        type=str,
+        default="train",
+        help="Dataset type, either 'train' or 'test'. Default: 'train'"
+    )
+
+    parser.add_argument(
+        "--min_image_size",
+        type=int,
+        default=100,
+        help="Minimum image size. Default: 100"
+    )
+
+    parser.add_argument(
+        "--max_image_size",
+        type=int,
+        default=600,
+        help="Maximum image size. Default: 600"
+    )
+
+    parser.add_argument(
+        "--min_objects_per_image",
+        type=int,
+        default=0,
+        help="Minimum number of objects per image. Default: 0"
+    )
+
+    parser.add_argument(
+        "--max_objects_per_image",
+        type=int,
+        default=20,
+        help="Maximum number of objects per image. Default: 20"
+    )
+
+    parser.add_argument(
+        "--noise_strength",
+        type=int,
+        default=32,
+        help="Strength of noise. Default: 32"
+    )
+
+    parser.add_argument(
+        "--min_object_scale_factor",
+        type=float,
+        default=1,
+        help="Minimum object scale factor. Default: 1"
+    )
+
+    parser.add_argument(
+        "--max_object_scale_factor",
+        type=float,
+        default=1,
+        help="Maximum object scale factor. Default: 1"
+    )
+
+    parser.add_argument(
+        "--max_object_angle",
+        type=float,
+        default=0,
+        help="Maximum object rotation angle in degrees. Default: 0"
+    )
+
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    train = args == "train"
+    source_dataset = MNIST(args.path_mnist, train=train, download=True)
+
+    generate_dataset(
+        source_dataset=source_dataset,
+        path_dataset=args.path_dataset,
+        sample_count=args.sample_count,
+        min_image_size=args.min_image_size,
+        max_image_size=args.max_image_size,
+        min_objects_per_image=args.min_objects_per_image,
+        max_objects_per_image=args.max_objects_per_image,
+        noise_strength=args.noise_strength,
+        min_object_scale_factor=args.min_object_scale_factor,
+        max_object_scale_factor=args.max_object_scale_factor,
+        max_object_angle=args.max_object_angle,
+    )
