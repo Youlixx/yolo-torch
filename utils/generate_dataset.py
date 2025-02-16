@@ -312,7 +312,7 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_args()
 
-    train = args == "train"
+    train = args.type == "train"
     source_dataset = MNIST(args.path_mnist, train=train, download=True)
 
     generate_dataset(
