@@ -60,7 +60,8 @@ class YoloDetectionHead(nn.Module):
         Returns:
             Tensor: Decoded bounding boxes.
         """
-        grid_h, grid_w = input_size
+        grid_h, grid_w = encoded_boxes.shape[1:3]
+        scale_h, scale_w = input_size[0] / grid_h, input_size[1] / grid_w
 
         # The predicted coordinates are local to the cell of the prediction, meaning it
         # is a value between 0 and 1, positioning the center of the box within that
@@ -68,9 +69,10 @@ class YoloDetectionHead(nn.Module):
         # in relative to the grid (i.e. x in [0 WG[ and y in [0 HG[). To do this, first
         # we create a tensor in which each cell contains its own coordinates within the
         # grid (shape: (1 x HG x WG x 1 x 2)).
-        cell_w = torch.range(grid_w, dtype=torch.float32)
-        cell_h = torch.range(grid_h, dtype=torch.float32)
-        cell_grid = torch.stack(torch.meshgrid(cell_w, cell_h))
+        cell_w = torch.arange(0, grid_w, dtype=torch.float32).to(encoded_boxes.device)
+        cell_h = torch.arange(0, grid_h, dtype=torch.float32).to(encoded_boxes.device)
+        cell_grid = torch.stack(torch.meshgrid(cell_w, cell_h, indexing="ij"))
+        cell_grid = torch.swapaxes(cell_grid, 0, -1)
         cell_grid = torch.reshape(cell_grid, shape=(1, grid_h, grid_w, 1, 2))
 
         # Then, we add the coordinates of the cell to the coordinates of the box after
@@ -86,6 +88,8 @@ class YoloDetectionHead(nn.Module):
         predicted_wh = encoded_boxes[..., 2:4]
         predicted_wh = torch.exp(predicted_wh)
         predicted_wh = self.priors * predicted_wh
+        predicted_wh[..., 0] /= scale_w  # TODO check
+        predicted_wh[..., 1] /= scale_h
 
         # The predicted objectness is merely obtained by applying the sigmoid function
         # to the logit. This probability indicates whether the box actually contains an
@@ -126,6 +130,17 @@ class YoloDetectionHead(nn.Module):
             Tensor: Decoded bounding boxes.
         """
         encoded_boxes = self.convolution_head(feature_maps)
-        decoded_boxes = self.decode_boxes(encoded_boxes, input_size)
+
+        # The decode function expects to receive a BS x HG x WG x B x (5+C) tensor.
+        # Since torch uses a channels first format, we have a BS x [B*(5+C)] x HG x WG
+        # tensor at this step, so we have to move the axes around. First, we switch from
+        # channels first to channels last and then split the channels into priors x
+        # classes.
+        encoded_boxes_reshaped = torch.swapaxes(encoded_boxes, 1, -1)
+        encoded_boxes_reshaped = torch.reshape(encoded_boxes_reshaped, shape=(
+            *encoded_boxes_reshaped.shape[:-1], self.prior_count, 5 + self.num_classes
+        ))
+
+        decoded_boxes = self.decode_boxes(encoded_boxes_reshaped, input_size)
 
         return decoded_boxes
