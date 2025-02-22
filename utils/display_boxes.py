@@ -67,8 +67,6 @@ def display_image_with_boxes(
             x1 *= scaling_factor
             y1 *= scaling_factor
 
-        print(x0, y0, x1, y1)
-
         image_with_boxes = cv2.rectangle(
             img=image_with_boxes,
             pt1=(x0, y0),
