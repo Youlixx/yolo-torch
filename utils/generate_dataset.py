@@ -22,8 +22,8 @@ MAX_RETRIES = 10
 def generate_sample(
     source_dataset: MNIST,
     object_indices: list[int],
-    min_image_size: int = 100,
-    max_image_size: int = 600,
+    image_width: int = 512,
+    image_height: int = 512,
     min_objects_per_image: int = 0,
     max_objects_per_image: int = 20,
     noise_strength: int = 20,
@@ -36,8 +36,8 @@ def generate_sample(
     Args:
         source_dataset (MNIST): Object source dataset.
         object_indices (list[int]): Sampling indices.
-        min_image_size (int): Image min size.
-        max_image_size (int): Image max size.
+        image_width (int): Image width.
+        image_height (int): Image height.
         min_objects_per_image (int): Minimum number of object per image.
         max_objects_per_image (int): Maximum number of object per image.
         noise_strength (int): Background noise strength.
@@ -51,12 +51,9 @@ def generate_sample(
             annotations data, with the bounding box first, the RLE encoded COCO mask,
             the object area and its label last.
     """
-    assert min_image_size <= max_image_size
     assert min_objects_per_image <= max_objects_per_image
     assert min_object_scale_factor <= max_object_scale_factor
 
-    image_width = random.randint(min_image_size, max_image_size)
-    image_height = random.randint(min_image_size, max_image_size)
     object_count = random.randint(min_objects_per_image, max_objects_per_image)
 
     object_map = np.zeros((image_height, image_width), dtype=bool)
@@ -139,8 +136,8 @@ def generate_dataset(
     source_dataset: MNIST,
     path_dataset: str,
     sample_count: int,
-    min_image_size: int = 100,
-    max_image_size: int = 600,
+    image_width: int = 512,
+    image_height: int = 512,
     min_objects_per_image: int = 0,
     max_objects_per_image: int = 20,
     noise_strength: int = 32,
@@ -154,8 +151,8 @@ def generate_dataset(
         source_dataset (MNIST): Object source dataset.
         path_dataset (str): Path to the generated dataset.
         sample_count (int): Number of image in the dataset.
-        min_image_size (int): Image min size.
-        max_image_size (int): Image max size.
+        image_width (int): Image width.
+        image_height (int): Image height.
         min_objects_per_image (int): Minimum number of object per image.
         max_objects_per_image (int): Maximum number of object per image.
         noise_strength (int): Background noise strength.
@@ -186,8 +183,8 @@ def generate_dataset(
         image, annotations = generate_sample(
             source_dataset=source_dataset,
             object_indices=indices,
-            min_image_size=min_image_size,
-            max_image_size=max_image_size,
+            image_width=image_width,
+            image_height=image_height,
             min_objects_per_image=min_objects_per_image,
             max_objects_per_image=max_objects_per_image,
             noise_strength=noise_strength,
@@ -253,17 +250,17 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--min_image_size",
+        "--image_width",
         type=int,
-        default=100,
-        help="Minimum image size. Default: 100"
+        default=512,
+        help="Image width. Default: 512"
     )
 
     parser.add_argument(
-        "--max_image_size",
+        "--image_height",
         type=int,
-        default=600,
-        help="Maximum image size. Default: 600"
+        default=512,
+        help="Image height. Default: 512"
     )
 
     parser.add_argument(
@@ -321,8 +318,8 @@ if __name__ == "__main__":
         source_dataset=source_dataset,
         path_dataset=args.path_dataset,
         sample_count=args.sample_count,
-        min_image_size=args.min_image_size,
-        max_image_size=args.max_image_size,
+        image_width=args.image_width,
+        image_height=args.image_height,
         min_objects_per_image=args.min_objects_per_image,
         max_objects_per_image=args.max_objects_per_image,
         noise_strength=args.noise_strength,
