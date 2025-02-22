@@ -186,10 +186,9 @@ class YoloDataset(Dataset):
         """
         path_image, annotations = self.samples[index]
 
-        image = cv2.imread(path_image)
+        image = cv2.imread(path_image, cv2.IMREAD_COLOR_RGB)
         image = torch.from_numpy(image).to(torch.float32)
-        image = torch.swapaxes(image, -1, 0)
-        # TODO pre-processing....
+        image = torch.swapaxes(image, -1, 0) / 255
 
         return image, annotations
 
