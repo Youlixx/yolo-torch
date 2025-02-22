@@ -88,7 +88,10 @@ class YoloDetectionHead(nn.Module):
         predicted_wh = encoded_boxes[..., 2:4]
         predicted_wh = torch.exp(predicted_wh)
         predicted_wh = self.priors * predicted_wh
-        predicted_wh[..., 0] /= scale_w  # TODO check
+
+        # Since the priors are relative to the input image size, we have to rescale the
+        # boxes to the grid.
+        predicted_wh[..., 0] /= scale_w
         predicted_wh[..., 1] /= scale_h
 
         # The predicted objectness is merely obtained by applying the sigmoid function
