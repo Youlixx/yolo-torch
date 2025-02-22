@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 
 
-def loss_yolo(ground_truth: Tensor, predicted: Tensor) -> Tensor:
+def loss_yolo(predicted: Tensor, ground_truth: Tensor) -> Tensor:
     """Compute the Yolo loss.
 
     Both tensors are expected to have the shape (BS x HG x WG x B x (5+C)):
@@ -18,8 +18,8 @@ def loss_yolo(ground_truth: Tensor, predicted: Tensor) -> Tensor:
         class.
 
     Args:
-        ground_truth (Tensor): The ground truth tensor.
         predicted (Tensor): The predicted tensor.
+        ground_truth (Tensor): The ground truth tensor.
 
     Returns:
         Tensor: The loss tensor.
@@ -68,7 +68,7 @@ def loss_yolo(ground_truth: Tensor, predicted: Tensor) -> Tensor:
     # If the intersection is empty, at least one of the dimension will be negative. By
     # setting it to zero, the intersection area will be zero.
     intersection_wh = intersection_x1_y1 - intersection_x0_y0
-    intersection_wh = torch.maximum(intersection_wh, 0.)
+    intersection_wh = torch.clamp(intersection_wh, min=0)
 
     # Then, we compute the intersection area between the predicted and ground truth
     # boxes.
@@ -110,5 +110,6 @@ def loss_yolo(ground_truth: Tensor, predicted: Tensor) -> Tensor:
     )
 
     diff = torch.sum(diff, dim=(1, 2, 3))
+    loss = torch.mean(diff)
 
-    return diff
+    return loss
