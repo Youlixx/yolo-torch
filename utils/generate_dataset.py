@@ -12,6 +12,8 @@ from torch import Tensor
 from torchvision.datasets.mnist import MNIST
 from torchvision.transforms.functional import resize, rotate
 
+from utils.typing import CocoDataset
+
 random.seed(1337)
 
 MAX_RETRIES = 10
@@ -172,7 +174,7 @@ def generate_dataset(
     os.mkdir(path_dataset)
     os.mkdir(path_images)
 
-    coco_annotations = {
+    coco_annotations: CocoDataset = {
         "categories": [{"id": index, "name": str(index)} for index in range(10)],
         "images": [],
         "annotations": []

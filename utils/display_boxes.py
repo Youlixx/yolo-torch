@@ -7,6 +7,8 @@ import random
 import cv2
 import numpy as np
 
+from utils.typing import CocoDataset
+
 
 def display_image_with_boxes(
     image: np.ndarray,
@@ -136,7 +138,7 @@ def display_random_dataset_samples(
     path_images = os.path.join(path_dataset, "images")
 
     with open(path_annotations, "r") as file:
-        annotations = json.load(file)
+        annotations: CocoDataset = json.load(file)
 
     random.shuffle(annotations["images"])
 
@@ -164,8 +166,8 @@ def display_random_dataset_samples(
         if image is None:
             continue
 
-        boxes = []
-        labels = []
+        boxes: list[tuple[int, int, int, int]] = []
+        labels: list[int] = []
 
         for annotation in per_sample_annotations[image_index]:
             boxes.append(annotation["bbox"])
