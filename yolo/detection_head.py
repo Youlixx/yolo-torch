@@ -1,5 +1,6 @@
 """Module containing the Yolo detection head implementation."""
 
+import numpy as np
 import torch
 from torch import Tensor, nn
 
@@ -7,18 +8,29 @@ from torch import Tensor, nn
 class YoloDetectionHead(nn.Module):
     """Yolo detection head."""
 
-    def __init__(self, in_channels: int, priors: Tensor, num_classes: int) -> None:
+    priors: Tensor
+    """Model priors."""
+
+    def __init__(
+        self,
+        in_channels: int,
+        priors: Tensor | np.ndarray,
+        num_classes: int
+    ) -> None:
         """Initialize the detection head.
 
         Args:
             in_channels (int): Depth of the input feature map.
-            priors (Tensor): Pre-computed priors.
+            priors (Tensor | np.ndarray): Pre-computed priors.
             num_classes (int): Number of output class.
         """
         super().__init__()
 
         self.num_classes = num_classes
         self.prior_count = priors.shape[0]
+
+        if isinstance(priors, np.ndarray):
+            priors = torch.from_numpy(priors)
 
         self.register_buffer("priors", priors)
 
