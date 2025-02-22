@@ -3,13 +3,14 @@
 from typing import TypedDict
 
 import numpy as np
+from torch import Tensor
 
 
 class DetectionResult(TypedDict):
     """Simple dict wrapping detection result."""
 
     boxes: np.ndarray
-    """Object bounding boxes."""
+    """Object bounding boxes using the xywh format."""
 
     labels: np.ndarray
     """Object labels."""
@@ -19,14 +20,14 @@ class DetectionResult(TypedDict):
 
 
 def decode_boxes(
-    output_tensor: np.ndarray,
+    output_tensor: Tensor,
     input_size: tuple[int, int],
     min_score: float = 0.05
 ) -> DetectionResult:
     """Decode Yolo outputs into boxes.
 
     Args:
-        output_tensor (np.ndarray): Model output tensor (unbatched).
+        output_tensor (Tensor): Model output tensor (unbatched).
         input_size (int): Input image size.
         min_score (float): Box minimum score.
 
@@ -34,6 +35,8 @@ def decode_boxes(
         DetectionResult: A dict containing the bounding boxes with their scores and
             labels.
     """
+    output_tensor = output_tensor.detach().cpu().numpy()
+
     grid_size = output_tensor.shape[:2]
     scale_h, scale_w = input_size[0] / grid_size[0], input_size[1] / grid_size[1]
 
@@ -75,6 +78,9 @@ def decode_boxes(
     labels = predicted_labels[valid_boxes]
     scores = confidence[valid_boxes]
 
+    # Convert the boxes back to xywh format.
+    boxes = np.concatenate([boxes[..., :2], boxes[..., 2:] - boxes[..., :2]], axis=-1)
+
     return {
         "boxes": boxes.astype(int),
         "labels": labels.astype(int),
@@ -102,9 +108,9 @@ def non_maximum_suppression(
     kept_indices = []
 
     predicted_x0_y0 = boxes[..., :2]
-    predicted_x1_y1 = boxes[..., 2:]
+    predicted_wh = boxes[..., 2:]
 
-    predicted_wh = predicted_x1_y1 - predicted_x0_y0
+    predicted_x1_y1 = boxes[..., 2:] + predicted_wh
     predicted_area = predicted_wh[..., 0] * predicted_wh[..., 1] + 1e-6
 
     remaining = np.argsort(scores)
