@@ -1,5 +1,7 @@
 """Module containing a Coco evaluation helper."""
 
+import os
+import sys
 from typing import TypedDict
 
 from pycocotools.coco import COCO
@@ -28,14 +30,20 @@ class CocoDetection(TypedDict):
 class CocoEvaluator:
     """Simple coco wrapper."""
 
-    def __init__(self) -> None:
-        """Initialize the wrapper."""
+    def __init__(self, disable_prints: bool = True) -> None:
+        """Initialize the wrapper.
+
+        Args:
+            disable_prints (bool): If enabled, disable COCO prints.
+        """
         self._available_categories: set[int] = set()
         self._detections: list[CocoDetection] = []
         self._ground_truth: list[CocoAnnotation] = []
 
         self._index_image = 0
         self._index_annotation = 0
+
+        self._disable_prints = disable_prints
 
     def add_detections(
         self,
@@ -95,6 +103,11 @@ class CocoEvaluator:
             "annotations": self._ground_truth
         }
 
+        original_stdout = sys.stdout
+
+        if self._disable_prints:
+            sys.stdout = open(os.devnull, 'w')
+
         coco_gt = COCO()
         coco_gt.dataset = coco_dataset
         coco_gt.createIndex()
@@ -104,5 +117,9 @@ class CocoEvaluator:
         coco_eval.evaluate()
         coco_eval.accumulate()
         coco_eval.summarize()
+
+        if self._disable_prints:
+            sys.stdout.close()
+            sys.stdout = original_stdout
 
         return coco_eval.stats[0]
