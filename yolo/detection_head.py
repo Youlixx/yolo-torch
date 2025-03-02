@@ -151,7 +151,7 @@ class YoloDetectionHead(nn.Module):
         # tensor at this step, so we have to move the axes around. First, we switch from
         # channels first to channels last and then split the channels into priors x
         # classes.
-        encoded_boxes_reshaped = torch.swapaxes(encoded_boxes, 1, -1)
+        encoded_boxes_reshaped = torch.moveaxis(encoded_boxes, 1, -1)
         encoded_boxes_reshaped = torch.reshape(encoded_boxes_reshaped, shape=(
             *encoded_boxes_reshaped.shape[:-1], self.prior_count, 5 + self.num_classes
         ))

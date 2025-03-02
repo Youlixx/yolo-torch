@@ -223,7 +223,7 @@ class YoloDataset(Dataset):
 
         image = cv2.imread(path_image, cv2.IMREAD_COLOR_RGB)
         image = torch.from_numpy(image).to(torch.float32)
-        image = torch.swapaxes(image, -1, 0) / 255
+        image = torch.moveaxis(image, -1, 0) / 255
 
         return image, annotations
 
