@@ -7,7 +7,6 @@ from typing import Literal, TypedDict
 import cv2
 import numpy as np
 import torch
-from sklearn.cluster import KMeans
 from torch import Tensor
 from torch.utils.data import Dataset
 
@@ -162,10 +161,46 @@ class YoloDataset(Dataset):
             annotation["bbox"][2:] for annotation in self.coco_dataset["annotations"]
         ])
 
-        k_means = KMeans(n_clusters=cluster_count, random_state=seed, max_iter=max_iter)
-        k_means.fit(boxes)
+        np.random.seed(seed)
 
-        return k_means.cluster_centers_
+        # Randomly initialize the clusters. We must ensure that each centroid is unique.
+        unique_boxes = np.unique(boxes, axis=0)
+        centroids = unique_boxes[
+            np.random.choice(len(unique_boxes),
+            size=cluster_count,
+            replace=False)
+        ]
+
+        boxes_wh = np.expand_dims(boxes, axis=1)
+
+        for _ in range(max_iter):
+            # As we use the IOU distance, we need to compute the intersection and union
+            # areas between the boxes and the centroids. The IOU distance is computed as
+            # if the two boxes are centered between each other.
+            intersection_wh = np.minimum(boxes_wh, centroids)
+            intersection_area = intersection_wh[..., 0] * intersection_wh[..., 1]
+
+            boxes_area = boxes_wh[..., 0] * boxes_wh[..., 1]
+            center_area = centroids[..., 0] * centroids[..., 1]
+            union_area = boxes_area + center_area - intersection_area
+
+            # The IOU distance is computed as d(x, y) = 1 - IOU(x, y).
+            # Note: union_area is always non zeros since the boxes are centered.
+            iou_distances = 1 - intersection_area / union_area
+
+            # We update the centers by taking the mean dimension of each cluster
+            closest_center = np.argmin(iou_distances, axis=-1)
+            new_centroids = np.array([
+                np.mean(boxes[closest_center == k], axis=0)
+                for k in range(cluster_count)
+            ])
+
+            if np.all(centroids == new_centroids):
+                break
+
+            centroids = new_centroids
+
+        return centroids
 
     def __len__(self) -> int:
         """Return the number of images."""
