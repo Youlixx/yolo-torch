@@ -11,6 +11,7 @@ from pycocotools.mask import encode
 from torch import Tensor
 from torchvision.datasets.mnist import MNIST
 from torchvision.transforms.functional import resize, rotate
+from tqdm import tqdm
 
 random.seed(1337)
 
@@ -177,7 +178,7 @@ def generate_dataset(
 
     annotation_index = 0
 
-    for image_index in range(sample_count):
+    for image_index in tqdm(range(sample_count)):
         image, annotations = generate_sample(
             source_dataset=source_dataset,
             object_indices=indices,

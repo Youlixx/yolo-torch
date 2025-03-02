@@ -88,6 +88,28 @@ def decode_boxes(
     }
 
 
+def filter_by_score(
+    detections: DetectionResult,
+    min_score: float = 0.5
+) -> DetectionResult:
+    """Filter out boxes with low scores.
+
+    Args:
+        detections (DetectionResult): Model output boxes.
+        min_score (float): Box min score.
+
+    Returns:
+        DetectionResult: Filtered boxes, scores and labels.
+    """
+    valid_boxes = detections["scores"] > min_score
+
+    return {
+        "boxes": detections["boxes"][valid_boxes],
+        "scores": detections["scores"][valid_boxes],
+        "labels": detections["labels"][valid_boxes]
+    }
+
+
 def non_maximum_suppression(
     detections: DetectionResult,
     nms_threshold: float = 0.7
@@ -107,10 +129,10 @@ def non_maximum_suppression(
 
     kept_indices = []
 
-    predicted_x0_y0 = boxes[..., :2]
     predicted_wh = boxes[..., 2:]
+    predicted_x0_y0 = boxes[..., :2] - predicted_wh / 2
+    predicted_x1_y1 = boxes[..., :2] + predicted_wh / 2
 
-    predicted_x1_y1 = boxes[..., 2:] + predicted_wh
     predicted_area = predicted_wh[..., 0] * predicted_wh[..., 1] + 1e-6
 
     remaining = np.argsort(scores)

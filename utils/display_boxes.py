@@ -167,9 +167,10 @@ def display_random_dataset_samples(
         boxes: list[tuple[int, int, int, int]] = []
         labels: list[int] = []
 
-        for annotation in per_sample_annotations[image_index]:
-            boxes.append(annotation["bbox"])
-            labels.append(annotation["category_id"])
+        if image_index in per_sample_annotations:
+            for annotation in per_sample_annotations[image_index]:
+                boxes.append(annotation["bbox"])
+                labels.append(annotation["category_id"])
 
         images.append(display_image_with_boxes(
             image=image,

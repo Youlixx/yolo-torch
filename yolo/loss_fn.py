@@ -7,7 +7,7 @@ from torch import Tensor
 def loss_yolo(predicted: Tensor, ground_truth: Tensor) -> Tensor:
     """Compute the Yolo loss.
 
-    Both tensors are expected to have the shape (BS x HG x WG x B x (5+C)):
+    Both tensors are expected to have the shape (BS x HG x WG x P x (5+C)):
     - y[..., 0] = x: the x position of the center of the box relative to the grid.
     - y[..., 1] = y: the y position of the center of the box relative to the grid.
     - y[..., 2] = w: the width of the box relative to the grid.
@@ -26,16 +26,16 @@ def loss_yolo(predicted: Tensor, ground_truth: Tensor) -> Tensor:
     """
     # First, we split the predicted tensors to retrieve the coordinates and the
     # conditional probabilities.
-    predicted_xy = predicted[..., :2]  # (BS x HG x WG x B x 2)
-    predicted_wh = predicted[..., 2:4]  # (BS x HG x WG x B x 2)
+    predicted_xy = predicted[..., :2]  # (BS x HG x WG x P x 2)
+    predicted_wh = predicted[..., 2:4]  # (BS x HG x WG x P x 2)
     predicted_objectness = predicted[..., 4]  # (BS x HG x WG x B)
-    predicted_probabilities = predicted[..., 5:]  # (BS x HG x WG x B x C)
+    predicted_probabilities = predicted[..., 5:]  # (BS x HG x WG x P x C)
 
     # Same for the ground truth tensors.
-    true_xy = ground_truth[..., :2]  # (BS x HG x WG x B x 2)
-    true_wh = ground_truth[..., 2:4]  # (BS x HG x WG x B x 2)
+    true_xy = ground_truth[..., :2]  # (BS x HG x WG x P x 2)
+    true_wh = ground_truth[..., 2:4]  # (BS x HG x WG x P x 2)
     true_objectness = ground_truth[..., 4]  # (BS x HG x WG x B)
-    true_probabilities = ground_truth[..., 5:]  # (BS x HG x WG x B x C)
+    true_probabilities = ground_truth[..., 5:]  # (BS x HG x WG x P x C)
 
     # Position error: a simple square error between the predicted and ground truth
     # positions.

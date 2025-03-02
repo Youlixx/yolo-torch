@@ -48,7 +48,7 @@ def _generate_single_ground_truth_tensor(
 ) -> Tensor:
     """Generate a ground truth output tensor.
 
-    The generated tensor have the shape (HG x WG x B x (5+C)):
+    The generated tensor have the shape (HG x WG x P x (5+C)):
     - y[..., 0] = x: the x position of the center of the box relative to the grid.
     - y[..., 1] = y: the y position of the center of the box relative to the grid.
     - y[..., 2] = w: the width of the box relative to the grid.
@@ -86,7 +86,7 @@ def _generate_single_ground_truth_tensor(
     # objectness" loss will be applied to these cells. The other cells should have a
     # true "objectness" of 1 and in this case, all the other losses will be applied.
     # This tensor can be seen as a 3D grid of size HG x WG x B, where each cell
-    # corresponds to a box (shape: (HG x WG x B x (5+C))).
+    # corresponds to a box (shape: (HG x WG x P x (5+C))).
     y_true = np.zeros((*grid_size, len(priors), 5 + num_classes))
 
     # If there are no bounding boxes, on the input image, we return an empty ground
@@ -134,7 +134,7 @@ def generate_ground_truth_tensors(
 ) -> Tensor:
     """Generate a batch of ground truth output tensors.
 
-    The generated tensor have the shape (BS x HG x WG x B x (5+C)):
+    The generated tensor have the shape (BS x HG x WG x P x (5+C)):
     - y[..., 0] = x: the x position of the center of the box relative to the grid.
     - y[..., 1] = y: the y position of the center of the box relative to the grid.
     - y[..., 2] = w: the width of the box relative to the grid.
