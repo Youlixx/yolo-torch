@@ -88,7 +88,7 @@ class YoloDetectionHead(nn.Module):
         cell_grid = torch.reshape(cell_grid, shape=(1, grid_h, grid_w, 1, 2))
 
         # Then, we add the coordinates of the cell to the coordinates of the box after
-        # applying the sigmoid function (shape: (BS x HG x WG x B x 2)).
+        # applying the sigmoid function (shape: (BS x HG x WG x P x 2)).
         predicted_xy = encoded_boxes[..., :2]
         predicted_xy = torch.sigmoid(predicted_xy)
         predicted_xy = cell_grid + predicted_xy
@@ -96,7 +96,7 @@ class YoloDetectionHead(nn.Module):
         # The predicted dimension of the box is relative to the associated prior. The
         # activation function used here is the exponential function, meaning that a
         # predicted size of 0 pre-activation will give the size of the prior (shape:
-        # (BS x HG x WG x B x 2)).
+        # (BS x HG x WG x P x 2)).
         predicted_wh = encoded_boxes[..., 2:4]
         predicted_wh = torch.exp(predicted_wh)
         predicted_wh = self.priors * predicted_wh
@@ -109,18 +109,18 @@ class YoloDetectionHead(nn.Module):
         # The predicted objectness is merely obtained by applying the sigmoid function
         # to the logit. This probability indicates whether the box actually contains an
         # object. The loss function used by YOLOv2 will make this value quantify the
-        # quality of the box (shape: (BS x HG x WG x B x 1)).
+        # quality of the box (shape: (BS x HG x WG x P x 1)).
         predicted_objectness = encoded_boxes[..., 4]
         predicted_objectness = torch.sigmoid(predicted_objectness)
         predicted_objectness = predicted_objectness.unsqueeze(dim=-1)
 
         # Finally, the conditional probability vector is obtained by applying the
-        # softmax function (shape: (BS x HG x WG x B x C])).
+        # softmax function (shape: (BS x HG x WG x P x C])).
         predicted_probabilities = encoded_boxes[..., 5:]
         predicted_probabilities = torch.softmax(predicted_probabilities, dim=-1)
 
         # The output tensor is then assembled by concatenating the previously computed
-        # tensors (shape: (BS x HG x WG x B x (5+C))).
+        # tensors (shape: (BS x HG x WG x P x (5+C))).
         decoded_boxes = torch.cat([
             predicted_xy,
             predicted_wh,
@@ -146,7 +146,7 @@ class YoloDetectionHead(nn.Module):
         """
         encoded_boxes = self.convolution_head(feature_maps)
 
-        # The decode function expects to receive a BS x HG x WG x B x (5+C) tensor.
+        # The decode function expects to receive a BS x HG x WG x P x (5+C) tensor.
         # Since torch uses a channels first format, we have a BS x [B*(5+C)] x HG x WG
         # tensor at this step, so we have to move the axes around. First, we switch from
         # channels first to channels last and then split the channels into priors x
