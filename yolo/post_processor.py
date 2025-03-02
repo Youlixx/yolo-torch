@@ -107,10 +107,10 @@ def non_maximum_suppression(
 
     kept_indices = []
 
-    predicted_x0_y0 = boxes[..., :2]
     predicted_wh = boxes[..., 2:]
+    predicted_x0_y0 = boxes[..., :2] - predicted_wh / 2
+    predicted_x1_y1 = boxes[..., :2] + predicted_wh / 2
 
-    predicted_x1_y1 = boxes[..., 2:] + predicted_wh
     predicted_area = predicted_wh[..., 0] * predicted_wh[..., 1] + 1e-6
 
     remaining = np.argsort(scores)
